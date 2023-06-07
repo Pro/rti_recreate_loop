@@ -48,14 +48,16 @@ void run_publisher_application(
         ;
      dds::pub::qos::PublisherQos publisher_qos = dds::core::QosProvider::Default().publisher_qos();
 
+
+     // Create a Publisher
+     dds::pub::Publisher publisher(participant);
+
+     // Create a DataWriter.
+     dds::pub::DataWriter<waitsets> writer(publisher, topic, writer_qos);
+
     int64_t samples_written = 0;
     // Main loop. Create a Publisher and DataWriter inside it to reproduce error
     while(!application::shutdown_requested){
-        // Create a Publisher
-        dds::pub::Publisher publisher(participant);
-
-        // Create a DataWriter.
-        dds::pub::DataWriter<waitsets> writer(publisher, topic, writer_qos);
 
         while (!application::shutdown_requested && writer.publication_matched_status().current_count() == 0) {
             // Wait for matched subscription to not send message to nowhere
@@ -76,9 +78,10 @@ void run_publisher_application(
 
         std::chrono::duration<double, std::milli> time_diff = std::chrono::steady_clock::now() - start;
         std::cout << "ack wait time:" << time_diff.count() << "ms. Subscriptions count: " << writer.publication_matched_status().current_count() << std::endl;
-        writer.close();
-        publisher.close();
     }
+    
+    writer.close();
+    publisher.close();
 }
 
 int main(int argc, char *argv[])
